@@ -74,21 +74,23 @@ bool do_exec(int count, ...)
  *
 */
 
+    int ret;
     int pid;
-    int status;
     int wstatus;
-    int rstatus;
+    
 
     if ((pid = fork()) == -1)
     {
-        perror("Error on fork:");
-        va_end(args);
+        perror("Error opening new process:");
+        va_end(args); 
         return false;
     }
-    else if (pid == 0) //child process
+    else if (pid == 0)
     {
         va_end(args);
-        if ((status = execv(command[0], command)) == -1)
+        ret = execv(command[0], command);
+        // printf("ret : %d", ret);
+        if (ret == -1)
         {
             perror("Error on execv:");
             exit(1);
@@ -96,7 +98,7 @@ bool do_exec(int count, ...)
         else
             exit(0);
     }
-    else //parent process
+    else
     {
         if ((pid = waitpid(-1, &wstatus, 0)) == -1)
         {
@@ -108,13 +110,13 @@ bool do_exec(int count, ...)
         {
             if (WIFEXITED(wstatus))
             {
-                if ((rstatus = WEXITSTATUS(wstatus)) == 1)
+                if (WEXITSTATUS(wstatus) == 1)
                 {
-                    printf("Error return from waitpid: %d\n", rstatus);
+                    printf("Error from waitpid: %d\n", WEXITSTATUS(wstatus));
                     return false;
                 }
                 else
-                    printf("Success return from waitpid: %d\n", rstatus);
+                    printf("Successful return from waitpid: %d\n", WEXITSTATUS(wstatus));
             }
         }
     }
@@ -165,11 +167,11 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     int pid;
     int status;
     int wstatus;
-    int rstatus;
+    
 
     if ((pid = fork()) == -1)
      {
-         perror("Error on fork:");
+         perror("Fork error:");
          va_end(args);
          close(fd);
          return false;
@@ -205,14 +207,14 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
          {
              if (WIFEXITED(wstatus))
              {
-                 if ((rstatus = WEXITSTATUS(wstatus)) == 1)
+                 if (WEXITSTATUS(wstatus) == 1)
                  {
-                     printf("Error return from waitpid: %d\n", rstatus);
+                     printf("Error return from waitpid: %d\n", WEXITSTATUS(wstatus));
                      close(fd);
                      return false;
                  }
                  else
-                     printf("Success return from waitpid: %d\n", rstatus);
+                     printf("Success return from waitpid: %d\n", WEXITSTATUS(wstatus));
              }
          }
      }
